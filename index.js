@@ -1,4 +1,5 @@
-var express = require('express');
+const express = require('express');
+const https = require('https');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 const { createEventAdapter } = require('@slack/events-api');
@@ -25,12 +26,45 @@ app.use('/slack/events', slackEvents.expressMiddleware());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
+async function getJsonObjectFromURL(url) {
+    return new Promise((resolve, reject) => {
+        const chunks = [];
+        try {
+            https.get(url, res => {
+                console.log('statusCode:', res.statusCode);
+                res.setEncoding('utf8')
+                .on('data', (chunk) => {
+                    chunks.push(chunk);
+                })
+                .on('end', () => {
+                    resolve(JSON.parse(chunks.join('')));
+                });
+            }).on('error', e => reject(e));
+        } catch (err) {
+            reject(err);
+        }
+    });
+};
+
+const getUserName = async (userId) => {
+    const endpoint = `https://slack.com/api/users.info?token=${slackToken}&user=${userId}&pretty=1`;
+
+    return await getJsonObjectFromURL(endpoint)
+    .then(data => {
+        return data.user.profile.real_name;
+    })
+    .catch(err => console.error(err));
+};
+
 slackEvents.on('app_mention', async (event) => {
     try {
         console.log("I got a mention in this channel", event.channel);
+        const userName = await getUserName(event.user);
+        console.log('username is: ', userName);
+
         const res = await webClient.chat.postMessage({
-            text: 'Hello there',
-            channel: conversationId,
+            text: `Hello there, ${userName}`,
+            channel: event.channel,
         });
         console.log('Message sent: ', res.ts);
     } catch (e) {
