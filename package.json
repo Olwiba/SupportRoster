@@ -1,0 +1,32 @@
+{
+  "name": "supportroster",
+  "version": "1.0.0",
+  "description": "Slackbot that notifies team members who is assigned to support each week.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "startDev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Olwiba/SupportRoster.git"
+  },
+  "keywords": [
+    "slackbot"
+  ],
+  "author": "Olwiba",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Olwiba/SupportRoster/issues"
+  },
+  "homepage": "https://github.com/Olwiba/SupportRoster#readme",
+  "dependencies": {
+    "@slack/events-api": "^2.3.2",
+    "@slack/web-api": "^5.8.0",
+    "body-parser": "^1.19.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "request": "^2.88.2"
+  }
+}
