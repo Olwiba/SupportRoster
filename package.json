@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "startDev": "nodemon index.js",
+    "startDev": "nodemon index.js --config nodemon.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -28,6 +28,8 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "fs": "^0.0.1-security",
-    "https": "^1.0.0"
+    "https": "^1.0.0",
+    "lodash.findindex": "^4.6.0",
+    "moment": "^2.24.0"
   }
 }
