@@ -1,18 +1,19 @@
 {
-    "apollo": {
-        "currentTick": 3,
+    "secondary": {
+        "currentTick": 0,
         "members": [
             ["Jasen Palmer", "U91NMRLHH"],
-            ["Callum", "UPS26J5EV"],
-            ["Darcy Thomas", "U02JRUKSM2B"]
+            ["Matt Byers", "U364574PQ"],
+            ["Callum", "UPS26J5EV"]
         ]
     },
-    "voyagers": {
-        "currentTick": 2,
+    "primary": {
+        "currentTick": 0,
         "members": [
+            ["Darcy Thomas", "U02JRUKSM2B"],
+            ["Sumitra Manga", "UFCRBD8SZ"],
             ["Deacon McIntyre", "UQKTX4YBG"],
-            ["Matt Byers", "U364574PQ"],
-            ["Sumitra Manga", "UFCRBD8SZ"]
+            ["Izsi Salmon", "UV28PRWQJ"]
         ]
     }
 }
