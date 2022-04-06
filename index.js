@@ -81,7 +81,8 @@ const checkForTarget = (target, targetEnum, inputParts) => {
 
 const availableActions = Object.freeze({
     help: 'help',
-    list: 'list',
+    showCurrentRoster: 'showCurrentRoster',
+    showNextRoster: 'showNextRoster',
     start: 'start',
     pause: 'pause',
     recall: 'recall',
@@ -92,11 +93,13 @@ const availableActions = Object.freeze({
 });
 
 const deriveAction = (input) => {
-    const inputParts = input.split(' ');
+    // Slack returning a non-space, space - we need to replace first then split.
+    const inputParts = input.replace(' ',' ').split(' ')
 
     // Check for target actions
     if (checkForTarget('help', availableActions, inputParts)) { return availableActions.help; }
-    else if (checkForTarget('list', availableActions, inputParts)) { return availableActions.list; }
+    else if (checkForTarget('showNextRoster', availableActions, inputParts)) { return availableActions.showNextRoster; }
+    else if (checkForTarget('showCurrentRoster', availableActions, inputParts)) { return availableActions.showCurrentRoster; }
     else if (checkForTarget('start', availableActions, inputParts)) { return availableActions.start; }
     else if (checkForTarget('pause', availableActions, inputParts)) { return availableActions.pause; }
     else if (checkForTarget('recall', availableActions, inputParts)) { return availableActions.recall; }
@@ -109,10 +112,8 @@ const deriveAction = (input) => {
 
 const availableTeams = Object.freeze({
     all: 'all',
-    cr: 'cr',
-    rum: 'rum',
-    apm: 'apm',
-    ss: 'ss',
+    voyagers: 'voyagers',
+    apollo: 'apollo',
 });
 
 const deriveTeam = (input) => {
@@ -120,10 +121,8 @@ const deriveTeam = (input) => {
 
     // Check for target teams
     if (checkForTarget('all', availableTeams, inputParts)) { return availableTeams.all; }
-    else if (checkForTarget('cr', availableTeams, inputParts)) { return availableTeams.cr; }
-    else if (checkForTarget('rum', availableTeams, inputParts)) { return availableTeams.rum; }
-    else if (checkForTarget('apm', availableTeams, inputParts)) { return availableTeams.apm; }
-    else if (checkForTarget('ss', availableTeams, inputParts)) { return availableTeams.ss; }
+    else if (checkForTarget('voyagers', availableTeams, inputParts)) { return availableTeams.voyagers; }
+    else if (checkForTarget('apollo', availableTeams, inputParts)) { return availableTeams.apollo; }
     else { return null; }
 };
 
@@ -134,7 +133,7 @@ const checkUserInTeam = (userId, teamMembers) => {
 let announcementTimeoutId, announcementIntervalId;
 
 const startAnnouncements = (channel) => {
-    const nextMonday = moment().day("Monday").hour(9).minute(0).second(0);
+    const nextMonday = moment().day(8).hour(8).minute(30).second(0);
     const offsetMsUntilMonday = nextMonday.diff(moment());
     const offsetDuration = moment.duration(offsetMsUntilMonday);
     const sevenDaysMs = (1000*60*60*24*7);
@@ -160,7 +159,7 @@ const addUserToTeam = async (userId, team, channel) => {
         sendMessage(`${userName} is already apart of the ${team.toUpperCase()} team!`, channel);
     } else {
         rosterData[team].members.push([userName, userId]);
-        sendMessage(`I've just added ${userName} to the CR roster!`, channel);
+        sendMessage(`I've just added ${userName} to the ${team.toUpperCase()} roster!`, channel);
         writeFile(rosterData, './roster.json');
     }
 };
@@ -257,84 +256,104 @@ Type \`@SupportRoster help\` to learn more.`,
 const helpMessage = (channel) => {
     sendMessage(
 `Here's a list of my available commands: \n
-\`@SupportRoster list [all|cr|rum|apm|ss]\` - Lists the roster for a team \n
-\`@SupportRoster start\` - Starts the weekly announcements (called every Monday @ 9am NZT) \n
+\`@SupportRoster showNextRoster {all|voyagers|apollo}\` - Lists the roster for next week \n
+\`@SupportRoster showCurrentRoster {all|voyagers|apollo}\` - Lists the roster for current week \n
+\`@SupportRoster start\` - Starts the weekly announcements (called every Monday @ 8:30am NZT) \n
 \`@SupportRoster pause\` - Pause the weekly announcements (current state will be remembered) \n
-\`@SupportRoster recall\` - Recall the current week's intercom assignees \n
-\`@SupportRoster add [@user] [cr|rum|apm|ss]\` - Adds a user to a team roster \n
-\`@SupportRoster remove [@user] [cr|rum|apm|ss]\` - Removes a user from a team roster \n
-\`@SupportRoster skip [cr|rum|apm|ss]\` - Moves forward one in the queue for a team \n
-\`@SupportRoster back [cr|rum|apm|ss]\` - Moves back one in the queue for a team`,
+\`@SupportRoster recall\` - Recall the current week's customer support assignees \n
+\`@SupportRoster add {@user} {voyagers|apollo}\` - Adds a user to a team roster \n
+\`@SupportRoster remove {@user} {voyagers|apollo}\` - Removes a user from a team roster \n
+\`@SupportRoster skip {voyagers|apollo}\` - Moves forward one in the queue for a team \n
+\`@SupportRoster back {voyagers|apollo}\` - Moves back one in the queue for a team`,
         channel
     );
 };
 
-const listRosterMessage = (team, channel) => {
+const showNextRosterMessage = (team, channel) => {
     let rosterData = readFile('./roster.json');
     let message = '';
 
     if (team === availableTeams.all) {
         const { 
-            cr: {
-                currentTick: crTick,
-                members: crMembers,
+            apollo: {
+                currentTick: apolloTick,
+                members: apolloMembers,
             },
-            rum: {
-                currentTick: rumTick,
-                members: rumMembers,
+            voyagers: {
+                currentTick: voyagersTick,
+                members: voyagersMembers,
             },
-            apm: {
-                currentTick: apmTick,
-                members: apmMembers,
+        } = rosterData;
+        
+        message += `*Apollo roster:* \n`;
+        apolloMembers.map((member, i) => {
+            message += apolloTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Next weeks assignee* \n`;
+        });
+        message += `----------------------------------------- \n`;
+        message += `*Voyagers roster:* \n`;
+        voyagersMembers.map((member, i) => {
+            message += voyagersTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Next weeks assignee* \n`;
+        });
+    } else if (team === availableTeams.apollo) {
+        const { apollo: { currentTick, members } } = rosterData;
+        message += `*Apollo roster:* \n`;
+        members.map((member, i) => {
+            message += currentTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Next weeks assignee* \n`;
+        });
+    } else if (team === availableTeams.voyagers) {
+        const { voyagers: { currentTick, members } } = rosterData;
+        message += `*Voyagers roster:* \n`;
+        members.map((member, i) => {
+            message += currentTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Next weeks assignee* \n`;
+        });
+    }
+
+    if (message !== '') {
+        sendMessage(message, channel);
+    } else {
+        unknownMessage(channel);
+    }
+};
+
+const showCurrentRosterMessage = (team, channel) => {
+    let rosterData = readFile('./roster.json');
+    let message = '';
+
+    if (team === availableTeams.all) {
+        const { 
+            apollo: {
+                currentTick: apolloTick,
+                members: apolloMembers,
             },
-            ss: {
-                currentTick: ssTick,
-                members: ssMembers,
+            voyagers: {
+                currentTick: voyagersTick,
+                members: voyagersMembers,
             },
         } = rosterData;
 
-        message += `*CR roster:* \n`;
-        crMembers.map((member, i) => {
-            message += crTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Current* \n`;
+        console.log('A:', (apolloTick === 0 ? apolloMembers.length - 1 : apolloTick - 1));
+        console.log('V:', (voyagersTick === 0 ? voyagersMembers.length - 1 : voyagersTick - 1));
+        
+        message += `*Apollo roster:* \n`;
+        apolloMembers.map((member, i) => {
+            message += (apolloTick === 0 ? apolloMembers.length - 1 : apolloTick - 1) !== i ? `- ${member[0]} \n` : `- *${member[0]} - This weeks assignee* \n`;
         });
         message += `----------------------------------------- \n`;
-        message += `*RUM roster:* \n`;
-        rumMembers.map((member, i) => {
-            message += rumTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Current* \n`;
+        message += `*Voyagers roster:* \n`;
+        voyagersMembers.map((member, i) => {
+            message += (voyagersTick === 0 ? voyagersMembers.length - 1 : voyagersTick - 1) !== i ? `- ${member[0]} \n` : `- *${member[0]} - This weeks assignee* \n`;
         });
-        message += `----------------------------------------- \n`;
-        message += `*APM roster:* \n`;
-        apmMembers.map((member, i) => {
-            message += apmTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Current* \n`;
-        });
-        message += `----------------------------------------- \n`;
-        message += `*SS roster:* \n`;
-        ssMembers.map((member, i) => {
-            message += ssTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Current* \n`;
-        });
-    } else if (team === availableTeams.cr) {
-        const { cr: { currentTick, members } } = rosterData;
-        message += `*CR roster:* \n`;
+    } else if (team === availableTeams.apollo) {
+        const { apollo: { currentTick, members } } = rosterData;
+        message += `*Apollo roster:* \n`;
         members.map((member, i) => {
-            message += currentTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Current* \n`;
+            message += (currentTick === 0 ? members.length - 1 : currentTick - 1) !== i ? `- ${member[0]} \n` : `- *${member[0]} - This weeks assignee* \n`;
         });
-    } else if (team === availableTeams.rum) {
-        const { rum: { currentTick, members } } = rosterData;
-        message += `*RUM roster:* \n`;
+    } else if (team === availableTeams.voyagers) {
+        const { voyagers: { currentTick, members } } = rosterData;
+        message += `*Voyagers roster:* \n`;
         members.map((member, i) => {
-            message += currentTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Current* \n`;
-        });
-    } else if (team === availableTeams.apm) {
-        const { apm: { currentTick, members } } = rosterData;
-        message += `*APM roster:* \n`;
-        members.map((member, i) => {
-            message += currentTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Current* \n`;
-        });
-    } else if (team === availableTeams.ss) {
-        const { ss: { currentTick, members } } = rosterData;
-        message += `*SS roster:* \n`;
-        members.map((member, i) => {
-            message += currentTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Current* \n`;
+            message += (currentTick === 0 ? members.length - 1 : currentTick - 1) !== i ? `- ${member[0]} \n` : `- *${member[0]} - This weeks assignee* \n`;
         });
     }
 
@@ -347,7 +366,7 @@ const listRosterMessage = (team, channel) => {
 
 const announceAssignees = (channel) => {
     let rosterData = readFile('./roster.json');
-    let message = `*This week's intercom assignees:* \n`;
+    let message = `*This week's customer support assignees:* \n`;
 
     Object.keys(availableTeams).map(team => {
         if (team !== availableTeams.all) {
@@ -370,7 +389,8 @@ slackEvents.on('app_mention', async (event) => {
 
         if (intendedAction != undefined) {
             if (intendedAction === availableActions.help) { helpMessage(event.channel); }
-            else if (intendedAction === availableActions.list) { listRosterMessage(intendedTeam, event.channel); }
+            else if (intendedAction === availableActions.showNextRoster) { showNextRosterMessage(intendedTeam, event.channel); }
+            else if (intendedAction === availableActions.showCurrentRoster) { showCurrentRosterMessage(intendedTeam, event.channel); }
             else if (intendedAction === availableActions.start) { startAnnouncements(event.channel); }
             else if (intendedAction === availableActions.pause) { pauseAnnouncements(event.channel); }
             else if (intendedAction === availableActions.recall) { announceAssignees(event.channel); }
