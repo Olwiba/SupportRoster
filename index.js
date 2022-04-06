@@ -90,6 +90,9 @@ const availableActions = Object.freeze({
     remove: 'remove',
     skip: 'skip',
     back: 'back',
+    // Aliases
+    show: 'showCurrentRoster',
+    showNext: 'showNextRoster',
 });
 
 const deriveAction = (input) => {
@@ -98,8 +101,14 @@ const deriveAction = (input) => {
 
     // Check for target actions
     if (checkForTarget('help', availableActions, inputParts)) { return availableActions.help; }
-    else if (checkForTarget('showNextRoster', availableActions, inputParts)) { return availableActions.showNextRoster; }
-    else if (checkForTarget('showCurrentRoster', availableActions, inputParts)) { return availableActions.showCurrentRoster; }
+    else if (
+        checkForTarget('showNextRoster', availableActions, inputParts) || 
+        checkForTarget('showNext', availableActions, inputParts)
+    ) { return availableActions.showNextRoster; }
+    else if (
+        checkForTarget('showCurrentRoster', availableActions, inputParts) || 
+        checkForTarget('show', availableActions, inputParts)
+    ) { return availableActions.showCurrentRoster; }
     else if (checkForTarget('start', availableActions, inputParts)) { return availableActions.start; }
     else if (checkForTarget('pause', availableActions, inputParts)) { return availableActions.pause; }
     else if (checkForTarget('recall', availableActions, inputParts)) { return availableActions.recall; }
@@ -112,8 +121,8 @@ const deriveAction = (input) => {
 
 const availableTeams = Object.freeze({
     all: 'all',
-    voyagers: 'voyagers',
-    apollo: 'apollo',
+    primary: 'primary',
+    secondary: 'secondary',
 });
 
 const deriveTeam = (input) => {
@@ -121,8 +130,8 @@ const deriveTeam = (input) => {
 
     // Check for target teams
     if (checkForTarget('all', availableTeams, inputParts)) { return availableTeams.all; }
-    else if (checkForTarget('voyagers', availableTeams, inputParts)) { return availableTeams.voyagers; }
-    else if (checkForTarget('apollo', availableTeams, inputParts)) { return availableTeams.apollo; }
+    else if (checkForTarget('primary', availableTeams, inputParts)) { return availableTeams.primary; }
+    else if (checkForTarget('secondary', availableTeams, inputParts)) { return availableTeams.secondary; }
     else { return null; }
 };
 
@@ -256,15 +265,15 @@ Type \`@SupportRoster help\` to learn more.`,
 const helpMessage = (channel) => {
     sendMessage(
 `Here's a list of my available commands: \n
-\`@SupportRoster showNextRoster {all|voyagers|apollo}\` - Lists the roster for next week \n
-\`@SupportRoster showCurrentRoster {all|voyagers|apollo}\` - Lists the roster for current week \n
+\`@SupportRoster showNextRoster {all|primary|secondary}\` - Lists the roster for next week \n
+\`@SupportRoster showCurrentRoster {all|primary|secondary}\` - Lists the roster for current week \n
 \`@SupportRoster start\` - Starts the weekly announcements (called every Monday @ 8:30am NZT) \n
 \`@SupportRoster pause\` - Pause the weekly announcements (current state will be remembered) \n
 \`@SupportRoster recall\` - Recall the current week's customer support assignees \n
-\`@SupportRoster add {@user} {voyagers|apollo}\` - Adds a user to a team roster \n
-\`@SupportRoster remove {@user} {voyagers|apollo}\` - Removes a user from a team roster \n
-\`@SupportRoster skip {voyagers|apollo}\` - Moves forward one in the queue for a team \n
-\`@SupportRoster back {voyagers|apollo}\` - Moves back one in the queue for a team`,
+\`@SupportRoster add {@user} {primary|secondary}\` - Adds a user to a team roster \n
+\`@SupportRoster remove {@user} {primary|secondary}\` - Removes a user from a team roster \n
+\`@SupportRoster skip {primary|secondary}\` - Moves forward one in the queue for a team \n
+\`@SupportRoster back {primary|secondary}\` - Moves back one in the queue for a team`,
         channel
     );
 };
@@ -275,34 +284,34 @@ const showNextRosterMessage = (team, channel) => {
 
     if (team === availableTeams.all) {
         const { 
-            apollo: {
-                currentTick: apolloTick,
-                members: apolloMembers,
+            secondary: {
+                currentTick: secondaryTick,
+                members: secondaryMembers,
             },
-            voyagers: {
-                currentTick: voyagersTick,
-                members: voyagersMembers,
+            primary: {
+                currentTick: primaryTick,
+                members: primaryMembers,
             },
         } = rosterData;
         
-        message += `*Apollo roster:* \n`;
-        apolloMembers.map((member, i) => {
-            message += apolloTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Next weeks assignee* \n`;
+        message += `*Secondary roster:* \n`;
+        secondaryMembers.map((member, i) => {
+            message += secondaryTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Next weeks assignee* \n`;
         });
         message += `----------------------------------------- \n`;
-        message += `*Voyagers roster:* \n`;
-        voyagersMembers.map((member, i) => {
-            message += voyagersTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Next weeks assignee* \n`;
+        message += `*Primary roster:* \n`;
+        primaryMembers.map((member, i) => {
+            message += primaryTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Next weeks assignee* \n`;
         });
-    } else if (team === availableTeams.apollo) {
-        const { apollo: { currentTick, members } } = rosterData;
-        message += `*Apollo roster:* \n`;
+    } else if (team === availableTeams.secondary) {
+        const { secondary: { currentTick, members } } = rosterData;
+        message += `*Secondary roster:* \n`;
         members.map((member, i) => {
             message += currentTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Next weeks assignee* \n`;
         });
-    } else if (team === availableTeams.voyagers) {
-        const { voyagers: { currentTick, members } } = rosterData;
-        message += `*Voyagers roster:* \n`;
+    } else if (team === availableTeams.primary) {
+        const { primary: { currentTick, members } } = rosterData;
+        message += `*Primary roster:* \n`;
         members.map((member, i) => {
             message += currentTick !== i ? `- ${member[0]} \n` : `- *${member[0]} - Next weeks assignee* \n`;
         });
@@ -321,37 +330,37 @@ const showCurrentRosterMessage = (team, channel) => {
 
     if (team === availableTeams.all) {
         const { 
-            apollo: {
-                currentTick: apolloTick,
-                members: apolloMembers,
+            secondary: {
+                currentTick: secondaryTick,
+                members: secondaryMembers,
             },
-            voyagers: {
-                currentTick: voyagersTick,
-                members: voyagersMembers,
+            primary: {
+                currentTick: primaryTick,
+                members: primaryMembers,
             },
         } = rosterData;
 
-        console.log('A:', (apolloTick === 0 ? apolloMembers.length - 1 : apolloTick - 1));
-        console.log('V:', (voyagersTick === 0 ? voyagersMembers.length - 1 : voyagersTick - 1));
+        console.log('Secondary:', (secondaryTick === 0 ? secondaryMembers.length - 1 : secondaryTick - 1));
+        console.log('Voyagers:', (primaryTick === 0 ? primaryMembers.length - 1 : primaryTick - 1));
         
-        message += `*Apollo roster:* \n`;
-        apolloMembers.map((member, i) => {
-            message += (apolloTick === 0 ? apolloMembers.length - 1 : apolloTick - 1) !== i ? `- ${member[0]} \n` : `- *${member[0]} - This weeks assignee* \n`;
+        message += `*Secondary roster:* \n`;
+        secondaryMembers.map((member, i) => {
+            message += (secondaryTick === 0 ? secondaryMembers.length - 1 : secondaryTick - 1) !== i ? `- ${member[0]} \n` : `- *${member[0]} - This weeks assignee* \n`;
         });
         message += `----------------------------------------- \n`;
-        message += `*Voyagers roster:* \n`;
-        voyagersMembers.map((member, i) => {
-            message += (voyagersTick === 0 ? voyagersMembers.length - 1 : voyagersTick - 1) !== i ? `- ${member[0]} \n` : `- *${member[0]} - This weeks assignee* \n`;
+        message += `*Primary roster:* \n`;
+        primaryMembers.map((member, i) => {
+            message += (primaryTick === 0 ? primaryMembers.length - 1 : primaryTick - 1) !== i ? `- ${member[0]} \n` : `- *${member[0]} - This weeks assignee* \n`;
         });
-    } else if (team === availableTeams.apollo) {
-        const { apollo: { currentTick, members } } = rosterData;
-        message += `*Apollo roster:* \n`;
+    } else if (team === availableTeams.secondary) {
+        const { secondary: { currentTick, members } } = rosterData;
+        message += `*Secondary roster:* \n`;
         members.map((member, i) => {
             message += (currentTick === 0 ? members.length - 1 : currentTick - 1) !== i ? `- ${member[0]} \n` : `- *${member[0]} - This weeks assignee* \n`;
         });
-    } else if (team === availableTeams.voyagers) {
-        const { voyagers: { currentTick, members } } = rosterData;
-        message += `*Voyagers roster:* \n`;
+    } else if (team === availableTeams.primary) {
+        const { primary: { currentTick, members } } = rosterData;
+        message += `*Primary roster:* \n`;
         members.map((member, i) => {
             message += (currentTick === 0 ? members.length - 1 : currentTick - 1) !== i ? `- ${member[0]} \n` : `- *${member[0]} - This weeks assignee* \n`;
         });
