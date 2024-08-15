@@ -104,3 +104,4 @@ dist
 .tern-port
 
 # Custom ignores
+package-lock.json

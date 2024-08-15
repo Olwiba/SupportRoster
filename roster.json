@@ -1,19 +1,20 @@
 {
+    "primary": {
+        "currentTick": 0,
+        "members": [    
+            ["John Doe", "U12345678"],
+            ["Team Member 1", "U11111111"],
+            ["Team Member 2", "U22222222"],
+            ["Team Member 3", "U33333333"]
+        ]
+    },
     "secondary": {
         "currentTick": 0,
         "members": [
-            ["Jasen Palmer", "U91NMRLHH"],
-            ["Matt Byers", "U364574PQ"],
-            ["Callum", "UPS26J5EV"]
-        ]
-    },
-    "primary": {
-        "currentTick": 0,
-        "members": [
-            ["Darcy Thomas", "U02JRUKSM2B"],
-            ["Sumitra Manga", "UFCRBD8SZ"],
-            ["Deacon McIntyre", "UQKTX4YBG"],
-            ["Izsi Salmon", "UV28PRWQJ"]
+            ["Team Member 4", "U44444444"],
+            ["Team Member 5", "U55555555"],
+            ["Team Member 6", "U66666666"],
+            ["Team Member 7", "U77777777"]
         ]
     }
 }
